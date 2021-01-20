@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
+import sys
 import time
 
 import twoNN
@@ -8,18 +9,17 @@ import twoNN
 
 def main():
 
-  # a = np.array([1,4,9], dtype=np.int32)
-  # b = np.array(range(6), dtype=np.int32)
-  N = 100000
-  a = np.array(range(N), dtype=np.int32)
-  b = np.array(range(N), dtype=np.int32)
+  float_width = 128
+  N = int(sys.argv[1])
+  a = np.zeros((N, float_width), dtype=np.float32)
+  b = np.zeros((N, float_width), dtype=np.float32)
 
   futhark_module = twoNN.twoNN(interactive=True)
 
   perf_counter_before = time.perf_counter()
 
   # Compute.
-  futhark_res = futhark_module.main(a, b)
+  futhark_res = futhark_module.twoNearestNeighbours(a, b)
 
   time_taken_seconds = time.perf_counter() - perf_counter_before
 
@@ -34,15 +34,19 @@ def main():
   assert all(a.shape[0] == arr.shape[0] for arr in res)
 
   # Print results.
-  for i in range(a.shape[0]):
-    ix = nearests_indices[i]
-    ix2 = secondnearest_indices[i]
-    nearest = b[ix]
-    nearest2 = b[ix2]
-    # print(f"{a[i]} -> nearest: {nearest} = b[{ix}], second nearest: {nearest2} = b[{ix2}]")
+  should_print = False
+  if should_print:
+    for i in range(a.shape[0]):
+      ix = nearests_indices[i]
+      ix2 = secondnearest_indices[i]
+      nearest = b[ix]
+      nearest2 = b[ix2]
+      print(f"{a[i]} -> nearest: {nearest} = b[{ix}], second nearest: {nearest2} = b[{ix2}]")
 
-  gflops = N * N / 1e9 / time_taken_seconds
+  flops_per_elem = 3  # 1 subtraction, 1 multiplication (squaring), 1 addition
+  gflops = N * N * float_width * flops_per_elem / 1e9 / time_taken_seconds
   print(f"Throughput: {gflops:.1f} Gflops")
+
 
 if __name__ == '__main__':
   main()
