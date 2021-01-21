@@ -27,7 +27,7 @@ entry twoNearestNeighbours [n][m]
         let
           twoNearest (a: value): ((dist, index), (dist, index)) =
             reduce nearer (worst, worst) (
-              map ( \(b, bi) -> ( (distance a b, i32.i64 bi), worst ) ) (zip bs (iota m))
+              map2 (\b bi -> ( (distance a b, bi), worst ) ) bs (indices bs)
             )
 
         in
